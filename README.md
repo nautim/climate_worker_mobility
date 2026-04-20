@@ -188,7 +188,7 @@ Observed installation time was approximately 10 minutes, including around 7 minu
 Start Jupyter Lab and open a notebook:
 
 ```bash
-jupyter lab notebooks_main/2_pagerank.ipynb
+jupyter-lab notebooks_main/2_pagerank.ipynb
 ```
 
 All further notebooks in notebooks_main/ can be executed within the same Jupyter Lab session.
