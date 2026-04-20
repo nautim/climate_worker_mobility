@@ -1,0 +1,20 @@
+.ipynb_checkpoints/
+notebooks_main/.ipynb_checkpoints/
+notebooks_main/__pycache__/
+scripts_causal_forest/.ipynb_checkpoints/
+
+*.pyc
+data_raw/
+data_generated/df_win.parquet
+data_generated/experience.parquet
+
+# large external datasets
+data_loaded/NRI_Shapefile_Counties/
+data_loaded/data_final/health_2000_2019.zip
+data_loaded/data_final/population_estimates/
+data_loaded/data_final/health_2020_2025/
+data_loaded/data_final/bea_economic_data/
+data_loaded/data_final/ACSST1Y2010.S1501.zip
+data_loaded/data_final/saipe_medianincome.zip
+data_loaded/data_final/ACSST1Y2010.S1401.zip
+data_loaded/data_final/ACSDT5Y2016.B19080_2025-12-05T143905.zip
