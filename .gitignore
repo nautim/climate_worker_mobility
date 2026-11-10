@@ -7,20 +7,8 @@ data_raw/
 data_generated/df_win.parquet
 data_generated/experience.parquet
 
-# Manuscript, figures-for-typesetting and peer-review material.
-# None of this belongs in the code release.
-naushirvanov_braindrain_NHB/
-naushirvanov_braindrain_NHB.pdf
-naushirvanov_braindrain_NHB.zip
-SI.pdf
-Review_NHB.docx
-NHB_Revision_Checklist_*.docx
-
 # Exploratory notebook that is not part of the reported analysis.
 notebooks_main/6_young_worker_robustness.ipynb
-
-# Local tooling
-.claude/
 
 # ---------------------------------------------------------------------------
 # Bulk public inputs.
@@ -60,6 +48,3 @@ data_loaded/data_final/ACSST1Y2010.S1501.zip
 data_loaded/data_final/ACSST1Y2010.S1401.zip
 data_loaded/data_final/ACSDT5Y2016.B19080_2025-12-05T143905.zip
 data_loaded/data_final/saipe_medianincome.zip
-
-# Audit report (local working notes, not part of the release)
-AUDIT_FINDINGS.md
