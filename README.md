@@ -1,229 +1,150 @@
 # Climate Brain Drain
 
-This repository accompanies the paper **“Climate Brain Drain: How natural hazard risk reshapes the geography of high-skilled mobility in the United States.”**
+Code and aggregated data for **“Natural hazard risk is associated with lower centrality in high-skill mobility networks in the United States.”**
 
 **Authors:** Timur Naushirvanov, Elisa Omodei, Márton Karsai, Takahiro Yabe
 
-## Table of Contents
+The analysis builds two directed, weighted mobility networks between US core-based statistical areas (CBSAs) over 2011-2022 (one of high-skill job-to-job moves derived from résumé records, one of general population moves from IRS county-to-county migration data) and compares each area's position in the two networks against local natural hazard risk.
 
-- [Repository Structure](#repository-structure)
-- [Pipeline Overview and Usage](#pipeline-overview-and-usage)
-  - [0. Data Processing](#0-data-processing)
-  - [1. Network Construction](#1-network-construction)
-  - [2. Network Metrics and Classification](#2-network-metrics-and-classification)
-  - [3. Regression Analysis](#3-regression-analysis)
-  - [4. Causal Forest Estimation (in R)](#4-causal-forest-estimation-in-r)
-    - [Binary Treatment](#binary-treatment)
-    - [Continuous Treatment](#continuous-treatment)
-    - [Placebo / Permutation Test](#placebo--permutation-test)
-  - [5. Causal Inference Visualisation](#5-causal-inference-visualisation)
-  - [6. Projections](#6-projections)
-  - [Final Figures](#final-figures)
-- [Reproducibility and Implementation](#reproducibility-and-implementation)
-  - [System Requirements](#system-requirements)
-  - [Computational Environment](#computational-environment)
-  - [Installation](#installation)
-  - [Usage](#usage)
-- [Data Availability](#data-availability)
-- [Code Availability](#code-availability)
-- [Statement on the Use of Generative AI](#statement-on-the-use-of-generative-ai)
+Python handles data processing, network construction, regression and plotting; R handles the causal forest estimation via `grf`.
 
-<hr style="height:2px;">
+## Contents
 
+- [Repository layout](#repository-layout)
+- [The pipeline](#the-pipeline)
+- [Robustness and supplementary analyses](#robustness-and-supplementary-analyses)
+- [Installation](#installation)
+- [Running the analysis](#running-the-analysis)
+- [Obtaining the external data](#obtaining-the-external-data)
+- [Data availability](#data-availability)
+- [Code availability](#code-availability)
+- [Use of generative AI](#use-of-generative-ai)
+- [License](#license)
 
-## Repository Structure
+## Repository layout
 
-```markdown
-
+```
 .
-├── LICENSE
-├── README.md
-├── requirements.txt
-├── notebooks_main/
+├── notebooks_main/              Python pipeline, run in numbered order
 │   ├── 0_data_processing.ipynb
 │   ├── 1_network_creation_cbsa.ipynb
 │   ├── 2_pagerank.ipynb
 │   ├── 3_modelling_pr_cbsa.ipynb
+│   ├── 3_modelling_pr_county.ipynb
 │   ├── 4_causal_inference.ipynb
 │   ├── 5_projections.ipynb
+│   ├── 7_representativeness_and_validation.ipynb
 │   ├── figures_final.ipynb
-│   └── utils.py
-├── scripts_causal_forest/
-│   ├── loop_causal_forest.R
-│   └── causal_forest_continuous.R
-├── data_generated/
-│   ├── network_metrics/
-│   └── cf_results/
-├── data_loaded/
-├── data_raw/
-└── fig/
-    └── si/
-
+│   └── utils.py                 shared loaders, spatial weights, SE estimators
+├── scripts_causal_forest/       grf estimation, called between notebooks 3 and 4
+├── scripts_robustness/          alternative-outcome cross-checks
+├── data_loaded/                 external inputs (largest are downloaded, not versioned)
+├── data_generated/              outputs of the pipeline; sufficient to reproduce from step 2 on
+│   ├── network_metrics/         flow tables, PageRank and HITS scores
+│   └── cf_results/              causal forest estimates
+├── fig/                         generated figures
+├── requirements.txt
+└── LICENSE
 ```
-<hr style="height:2px;">
 
-## Pipeline Overview and Usage
+## The pipeline
 
-The repository is organised as a sequential, modular pipeline, progressing from raw data processing to network construction, empirical analysis, causal inference, and projections. Individual notebooks can be executed independently, but full reproduction of results requires running preceding steps due to data dependencies. Processed datasets sufficient to reproduce the analysis from the PageRank computation stage onward are provided in `data_generated/`. Earlier steps, including network construction, require access to the original raw data and are not directly reproducible from the repository.
+Steps run in order, each depending on the one before. `data_generated/` is included in the repository, so **everything from step 2 onward reproduces without the licensed source data**; steps 0 and 1 need the résumé microdata, which cannot be redistributed.
 
-### 0. Data Processing  
-**`0_data_processing.ipynb`**  
-Loads raw employment data from a SQLite database, matches experiences to O*NET job codes, job zones, and seniority levels, geocodes company locations to counties, and constructs career trajectory features.  
-**Output:** `experience.parquet`
+`0_data_processing.ipynb` reads the raw employment histories from SQLite, maps job titles to O\*NET SOC codes, job zones and seniority levels, geocodes employers to counties, and assembles career trajectories. Writes `experience.parquet`.
 
+`1_network_creation_cbsa.ipynb` turns job transitions and IRS migration records into directed county- and CBSA-level flow networks for 2011-2022, keeping only moves into job zone 4-5 occupations. Work counties are probabilistically reassigned to likely home counties using LODES commuting flows before aggregation. Also builds the subgroup networks (by seniority, by SOC field), the three-year windows, and the pooled 2011-2019 network. Writes flow tables and centrality scores to `data_generated/network_metrics/`.
 
-### 1. Network Construction  
-**`1_network_creation_cbsa.ipynb`**  
-Builds directed worker-flow networks from job transitions and IRS tax migration data at the county and CBSA levels (2011–2022), restricted to high-skill occupations (job zone ≥ 4). Also constructs subgroup networks by seniority and SOC field, as well as three-year periods.  
-**Output:** flow tables and HITS/PageRank metrics stored in `network_metrics/`
+`2_pagerank.ipynb` classifies CBSAs and counties as brain, mass, dual or peripheral hubs from the log-ratio of their high-skill and IRS PageRank, tracks how those positions shift across three-year windows, and draws the maps and correlation heatmaps.
 
+`3_modelling_pr_cbsa.ipynb` fits the main cross-sectional model: PageRank log-differences on hazard risk and five blocks of socioeconomic controls, with a Shapley (LMG) decomposition of R², marginal-effect plots and correlation diagnostics. Also produces the spatial-dependence diagnostics (Moran's I, Conley spatial-HAC, approximate state clustering) and the hazard-measure and outcome-measure robustness tables. `3_modelling_pr_county.ipynb` repeats the model at native county resolution.
 
-### 2. Network Metrics and Classification  
-**`2_pagerank.ipynb`**  
-Computes and visualises dual-hub metrics by classifying CBSAs and counties into Brain, Mass, Dual, or Peripheral hubs based on the log-ratio of High-Skill and IRS PageRank. Tracks temporal dynamics across three-year windows and produces geographic maps and correlation heatmaps.
+`4_causal_inference.ipynb` reads the `grf` output and plots the treatment-effect distributions, subgroup estimates, hazard-specific estimates and variable importance. Run the R scripts below first.
 
+`5_projections.ipynb` combines the continuous-treatment estimates with FEMA National Risk Index projections to 2100 to map implied shifts in relative centrality. These are illustrative scenarios conditional on the estimated relationship holding, not forecasts.
 
-### 3. Regression Analysis  
-**`3_modelling_pr_cbsa.ipynb`**  
-Estimates CBSA-level regressions of PageRank log-differences on climate risk indicators and socioeconomic controls. Includes subgroup analyses and produces coefficient plots, marginal effects, and correlation diagnostics.
+`figures_final.ipynb` assembles the main-text figure panels, and fits the PPML gravity models used for the distance-decay results.
 
+### The R step
 
-### 4. Causal Forest Estimation (in R)
+Between notebooks 3 and 4, from the repository root:
 
-#### Binary Treatment  
-**`loop_causal_forest.R`**  
-Estimates heterogeneous treatment effects of 19 hazard types using `grf::causal_forest`, including overlap trimming and estimation of ATE, ATT, ATC, and ATO. Calibration and RATE tests are used to assess the validity and usefulness of heterogeneous treatment effects. Outputs: `cf_cates.csv`, `cf_summary.csv`, `cf_varimp.csv`, `cf_subgroups.csv`
+```bash
+Rscript scripts_causal_forest/loop_causal_forest.R        # binary treatment, per hazard
+Rscript scripts_causal_forest/causal_forest_continuous.R  # continuous treatment
+Rscript scripts_causal_forest/causal_forest_placebo.R     # permutation null
+```
 
-#### Continuous Treatment  
-**`causal_forest_continuous.R`**  
-Estimates average marginal effects of continuous hazard exposure using the partial linear framework. Reports ATE and overlap-weighted ATO, alongside calibration diagnostics. Outputs: `cf_continuous_cates.csv`, `cf_contunuous_summary.csv`
+`loop_causal_forest.R` estimates heterogeneous treatment effects for each of the 18 National Risk Index hazard types plus the composite score (two hazards have too few exposed CBSAs to fit, so 16 are reported), trimming propensity scores to 0.05–0.95 and reporting ATE, ATT, ATC and ATO alongside calibration and RATE diagnostics. `causal_forest_continuous.R` estimates average marginal effects of continuous exposure under the partial-linear framework. `causal_forest_placebo.R` builds a null distribution by permuting treatment labels and refitting. Outputs land in `data_generated/cf_results/`.
 
-#### Placebo / Permutation Test  
-**`causal_forest_placebo.R`**  
-Builds a null distribution for the estimated treatment effect by repeatedly permuting treatment labels and re-running the causal forest pipeline under the sharp null of no effect. Outputs: `cf_summary_random.csv`, `cf_placebo_summary.csv`
+## Robustness and supplementary analyses
 
-### 5. Causal Inference Visualisation  
-**`4_causal_inference.ipynb`**  
-Visualises causal forest outputs, including treatment effects, heterogeneity, and variable importance.
+Each of these reruns part of the pipeline under a different specification; outputs go to subdirectories of `data_generated/cf_results/`.
 
+| Script | What changes |
+| --- | --- |
+| `loop_causal_forest_1119.R`, `causal_forest_continuous_1119.R`, `causal_forest_placebo_1119.R` | Pre-pandemic sample only (2011-2019) |
+| `loop_causal_forest_clustered.R`, `causal_forest_continuous_clustered.R`, `causal_forest_placebo_clustered.R` | Standard errors clustered by state |
+| `loop_causal_forest_county.R`, `causal_forest_continuous_county.R`, `causal_forest_placebo_county.R` | County rather than CBSA resolution |
+| `hazard_measure_comparison.R`, `hazard_measure_comparison_county.R` | Composite risk score vs capacity-purged expected annual loss vs a climate-only composite |
+| `perhazard_eal_comparison.R` | The 13 climate-relevant hazards' expected annual loss, one at a time |
+| `scripts_robustness/outcomes_x_hazard_measures.py` | Six outcome measures crossed with three hazard measures, by OLS |
+| `scripts_robustness/causal_forest_alt_outcomes.R` | The same cross, by causal forest |
 
-### 6. Projections  
-**`5_projections.ipynb`**  
-Combines estimated effects with projected hazard exposure to 2100 to infer future spatial shifts in high-skill worker attractiveness.
+`7_representativeness_and_validation.ipynb` benchmarks the résumé sample against BLS OES, ACS and County Business Patterns, and validates the resulting flows against Census LEHD Job-to-Job data.
 
----
-
-### Final Figures  
-**`figures_final.ipynb`**  
-Produces some of the publication-ready figures.
-
-<hr style="height:2px;">
-
-## Reproducibility and Implementation
-
-The repository is organised as a sequential, modular pipeline, progressing from raw data processing to network construction, empirical analysis, causal inference, and projections. Individual notebooks can be executed independently, but full reproduction of results requires running preceding steps due to data dependencies. Processed datasets sufficient to reproduce the analysis from the PageRank computation stage onward are provided in `data_generated/`. Earlier steps, including network construction, require access to the original raw data and are not directly reproducible from the repository.
-
-### System Requirements
-
-The code was developed and tested in the following environments:
-
-- Linux (x86_64, SUSE Linux Enterprise Server 15 SP6)
-- macOS (Apple Silicon, macOS 26.4.1, MacBook Air M2)
-
-Software versions:
-- Python 3.12.0
-- R 4.4–4.5 (tested across environments)
-
-The code is expected to run on standard systems with similar configurations. No specialised hardware is required.
-
----
-### Computational Environment
-
-#### Python dependencies
-See `requirements.txt`.
-
-#### R dependencies
-- grf  
-- dplyr  
-
----
-### Installation
-
-Clone the repository:
+## Installation
 
 ```bash
 git clone https://github.com/nautim/climate_worker_mobility.git
 cd climate_worker_mobility
-```
 
-Create a conda environment with Python, R, and Jupyter Lab:
-
-```bash
-conda create -n climate_worker_mobility \
-  -c conda-forge \
-  python=3.12 \
-  r-base=4.4 \
-  jupyterlab
-```
-
-Activate the environment:
-
-```bash
+conda create -n climate_worker_mobility -c conda-forge python=3.12 r-base=4.4 jupyterlab
 conda activate climate_worker_mobility
-```
 
-Install Python dependencies and R packages:
-
-```bash
 pip install -r requirements.txt
-
 Rscript -e "install.packages(c('grf', 'dplyr'), repos='https://cloud.r-project.org')"
 ```
 
-Observed installation time was approximately 10 minutes, including around 7 minutes for compiling the grf package (notably on osx-arm64).
+Installation took about 10 minutes in testing, most of it compiling `grf` on osx-arm64.
 
----
-### Usage
+Tested on Linux (x86_64, SUSE Linux Enterprise Server 15 SP6) and macOS 26.4.1 (Apple Silicon, MacBook Air M2), with Python 3.12.0 and R 4.4-4.5. No special hardware is needed.
 
-Start Jupyter Lab and open a notebook:
+## Running the analysis
 
 ```bash
 jupyter-lab notebooks_main/2_pagerank.ipynb
 ```
 
-All further notebooks in notebooks_main/ can be executed within the same Jupyter Lab session.
+Run the notebooks in numbered order in one Jupyter Lab session, pausing after `3_modelling_pr_cbsa.ipynb` for the three R scripts above. Notebook paths are relative to `notebooks_main/`, so run them from there. Expect roughly 15 minutes end to end on a personal computer, excluding installation and the causal forest scripts.
 
-After running notebook 3_modelling_pr_cbsa.ipynb abd before 4_causal_inference.ipynb, run the causal forest scripts from the terminal:
+## Obtaining the external data
 
-```bash
-Rscript scripts_causal_forest/loop_causal_forest.R
-Rscript scripts_causal_forest/causal_forest_continuous.R
-Rscript scripts_causal_forest/causal_forest_placebo.R
-```
+Small reference inputs are versioned in `data_loaded/`. The bulk files below are public but too large to keep in git, so download them into the paths shown before running the steps that need them. Every other step runs without them.
 
-Remaining notebooks can then be executed in Jupyter Lab.
+| Path | Source | Needed by |
+| --- | --- | --- |
+| `data_loaded/LODES/` | [LEHD LODES](https://lehd.ces.census.gov/data/) origin–destination files, aggregated by county | notebook 1 |
+| `data_loaded/county/` | [Census cartographic county boundaries](https://www.census.gov/programs-surveys/geography/guidance/tiger-data-products-guide.html), 2018 and 2024 vintages | `utils.load_counties`, notebooks 2–5 |
+| `data_loaded/jobpostings_aggregated/` | Job postings aggregated by county, month and NAICS | notebook 3 |
+| `data_loaded/NRI_Shapefile_Counties/` | [FEMA National Risk Index](https://hazards.fema.gov/nri/) county shapefile | per-hazard EAL scores in notebook 3 |
+| `data_loaded/external_validation/lehd_j2j/`, `j2j_*.csv` | [Census LEHD Job-to-Job flows](https://lehd.ces.census.gov/data/j2j.html) | notebook 7 |
+| `data_loaded/data_final/` archives | ACS, SAIPE, BEA and County Health Rankings source archives | only to rebuild the `*_combined.parquet` files, which are versioned |
 
-Expected runtime is approximately 15 minutes on a standard personal computer (excluding installation time).
+## Data availability
 
-<hr style="height:2px;">
+The résumé microdata come from People Data Labs via Dewey and were used under licence. They cannot be redistributed; access can be requested at [deweydata.io](https://www.deweydata.io/data-partners/people-data-labs). IRS migration data are public at [irs.gov](https://www.irs.gov/statistics/soi-tax-stats-migration-data), American Community Survey tables at [data.census.gov](https://data.census.gov/), and the remaining public sources are listed above. Variable definitions and sources are given in the paper's Supplementary Information.
 
-## Data Availability
+The aggregated tables in `data_generated/` are sufficient to reproduce every reported result from the PageRank stage onward.
 
-Raw employment data cannot be shared due to licensing and privacy restrictions.
+## Code availability
 
-This repository provides processed and aggregated datasets sufficient to reproduce all analyses from the network construction stage onward. External datasets (IRS migration data, National Risk Index, census and socioeconomic indicators) are publicly available and can be obtained from their respective sources.
+All analysis code is in this repository. A step-by-step workflow, dependency list and data requirements are given above.
 
-<hr style="height:2px;">
+## Use of generative AI
 
-## Code Availability
+Generative AI tools were used for code review, debugging, and documentation. The analytical design, methodological choices and interpretation of results are the authors' own, and all outputs were checked against the underlying data.
 
-All code required to reproduce the analysis, figures, and results is available in this repository. The workflow combines Python (data processing, network analysis, visualisation) and R (causal inference using `grf`).
+## License
 
-<hr style="height:2px;">
-
-## Statement on the Use of Generative AI
-
-Generative AI tools were used in a supportive capacity during this project, primarily for code review, debugging, and improving code structure and documentation. All analytical decisions, methodological design, and interpretation of results were carried out by the authors.
-
-No generative AI tools were used to produce original research findings, perform core analyses, or substitute domain-specific judgment. All outputs were critically assessed and validated to ensure accuracy and consistency with the research objectives.
-
+MIT. See [LICENSE](LICENSE).

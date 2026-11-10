@@ -1,0 +1,22 @@
+section,metric,value
+Map comparison,"Spearman(exp PageRank, irs PageRank), 806 CBSAs",0.791
+Map comparison,Most high-skill-centrality-exceeds-general CBSA,"San Francisco-Oakland-Fremont, CA (logdiff=+1.61)"
+Map comparison,Most general-exceeds-high-skill CBSA,"El Paso, TX (logdiff=-2.06)"
+Occupational,OES employment unmatched to Job Zone map,30.7% of national detailed employment -- PARTIAL benchmark
+Occupational,Computer & Math: our share vs OES JZ4-5 share,27.6% vs 4.6% (6.0x overrepresented)
+Occupational,Healthcare Practitioners: our share vs OES JZ4-5,1.5% vs 13.8% (0.11x underrepresented)
+Occupational,soc_broad groups absent from OES JZ4-5 entirely,6 of 21 (become zero rows)
+Geographic,"Pearson(log persons, log BA+ population), 812 CBSAs",0.907
+Geographic,Log-log slope (persons on BA+ population),"0.736 [0.712, 0.760]"
+Geographic,Most over-covered large CBSA,"San Jose-Sunnyvale-Santa Clara, CA (residual=+0.73)"
+Geographic,"PDL persons per 1,000 BA+ adults","median 0.67, p10=0.20, p90=1.98"
+Demographic,Base A (age field) missing share,32.0%
+Demographic,Base B (graduation proxy) missing share,27.1%
+Demographic,"Spearman(Base A, Base B) on overlap, n=18,517","0.010 (p=0.156, NOT significantly correlated)"
+Demographic,18-34 share: ours (both bases) vs ACS BA+,~0.79-0.82 vs 0.27 -- sample skews heavily young
+Flow Validation,"Marginal: our high-skill out-flow vs J2J, log-log Pearson",0.926
+Flow Validation,"Marginal: our general-mobility out-flow vs J2J, log-log Pearson",0.979
+Flow Validation,"Dyadic Spearman, 2,199 positive-positive state pairs",0.807
+Flow Validation,Our top-500 dyads with nonzero J2J flow,100.0%
+Flow Validation,Resolution actually validated,"STATE, not CBSA (see limitations)"
+Flow Validation,Industry addendum: our 2019 state dist. vs Professional/Tech J2J,r=0.961 vs r=0.897 all-industries baseline

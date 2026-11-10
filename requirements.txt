@@ -1,4 +1,5 @@
-# Python
+# Python 3.12.0
+# pip install -r requirements.txt
 numpy==1.26.4
 pandas==2.1.4
 geopandas==1.0.1
@@ -9,12 +10,16 @@ matplotlib==3.8.2
 seaborn==0.13.0
 adjustText==1.3.0
 shapely==2.0.2
+libpysal==4.14.1
+esda==2.9.0
 patsy==0.5.4
 tqdm==4.64.1
 pyarrow==14.0.1
 openpyxl==3.1.5
 joblib==1.3.2
+pyfixest==0.60.0
 
-# R dependencies
-# grf (2.6.1)
-# dplyr (1.2.1)
+# R 4.4-4.5, installed separately:
+#   Rscript -e "install.packages(c('grf', 'dplyr'), repos='https://cloud.r-project.org')"
+# grf 2.6.1
+# dplyr 1.2.1

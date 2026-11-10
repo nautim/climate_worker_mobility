@@ -1,0 +1,15 @@
+source,url,http,bytes,mb,requires_key,decision
+BLS OES national 2012,https://www.bls.gov/oes/special-requests/oesm12nat.zip,200,125747.0,0.1,no (needs User-Agent),download
+BLS OES national 2019,https://www.bls.gov/oes/special-requests/oesm19nat.zip,200,243832.0,0.2,no (needs User-Agent),download
+BLS OES national 2022,https://www.bls.gov/oes/special-requests/oesm22nat.zip,200,266448.0,0.3,no (needs User-Agent),download
+LEHD J2J OD national,https://lehd.ces.census.gov/data/j2j/latest_release/us/j2jod/j2jod_us_all.csv.gz,200,4733174.0,4.7,no,"unusable (geo_level=N, national aggregate only)"
+LEHD J2J OD per-state (51/51 avail),https://lehd.ces.census.gov/data/j2j/latest_release/{st}/j2jod/j2jod_{st}_all.csv.gz,200,36708020966.0,"36,708.0",no,download (selective)
+ACS PUMS 1-Year 2019 national (person),https://www2.census.gov/programs-surveys/acs/data/pums/2019/1-Year/csv_pus.zip,200,567851237.0,567.9,no (direct download),probe_only
+ACS PUMS 5-Year 2015-2019 national (person),https://www2.census.gov/programs-surveys/acs/data/pums/2019/5-Year/csv_pus.zip,200,2238752642.0,"2,238.8",no (direct download),probe_only
+ACS PUMS via api.census.gov,https://api.census.gov/data/.../pums,200,,,YES (free key required),unusable without key
+IRS SOI county inflow 18-19,https://www.irs.gov/pub/irs-soi/countyinflow1819.csv,200,20.0,0.0,no,already held locally (no AGI bracket)
+IRS SOI state inflow 18-19,https://www.irs.gov/pub/irs-soi/stateinflow1819.csv,200,20.0,0.0,no,already held locally (no AGI bracket)
+IRS SOI AGI-bracket county candidate: countyinflow1819agi.csv,https://www.irs.gov/pub/irs-soi/countyinflow1819agi.csv,404,85743.0,0.1,no,NOT FOUND
+IRS SOI AGI-bracket county candidate: countyinflow1819_agi.csv,https://www.irs.gov/pub/irs-soi/countyinflow1819_agi.csv,404,85745.0,0.1,no,NOT FOUND
+IRS SOI AGI-bracket county candidate: 1819countyinflowagi.csv,https://www.irs.gov/pub/irs-soi/1819countyinflowagi.csv,404,85743.0,0.1,no,NOT FOUND
+IRS SOI AGI-bracket county candidate: countyinflowagi1819.csv,https://www.irs.gov/pub/irs-soi/countyinflowagi1819.csv,404,85743.0,0.1,no,NOT FOUND

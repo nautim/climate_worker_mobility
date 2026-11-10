@@ -1,20 +1,65 @@
 .ipynb_checkpoints/
-notebooks_main/.ipynb_checkpoints/
-notebooks_main/__pycache__/
-scripts_causal_forest/.ipynb_checkpoints/
-
+__pycache__/
 *.pyc
+
+# Licensed microdata. Cannot be redistributed (see Data Availability in the paper).
 data_raw/
 data_generated/df_win.parquet
 data_generated/experience.parquet
 
-# large external datasets
+# Manuscript, figures-for-typesetting and peer-review material.
+# None of this belongs in the code release.
+naushirvanov_braindrain_NHB/
+naushirvanov_braindrain_NHB.pdf
+naushirvanov_braindrain_NHB.zip
+SI.pdf
+Review_NHB.docx
+NHB_Revision_Checklist_*.docx
+
+# Exploratory notebook that is not part of the reported analysis.
+notebooks_main/6_young_worker_robustness.ipynb
+
+# Local tooling
+.claude/
+
+# ---------------------------------------------------------------------------
+# Bulk public inputs.
+#
+# These are downloaded rather than versioned: they are large, they are stable,
+# and every one of them is a public file with a permanent URL. See "Obtaining
+# the external data" in README.md for where each comes from. Everything needed
+# to reproduce the analysis from the PageRank stage onward is in
+# data_generated/ and is versioned.
+# ---------------------------------------------------------------------------
+
+# Census LEHD Job-to-Job flows (external validation, notebook 7).
+# The single aggregate extract alone is 771 MB, past GitHub's 100 MB file limit.
+data_loaded/external_validation/j2j_*.csv
+data_loaded/external_validation/lehd_j2j/
+
+# LODES commuting flows (home-location reassignment, notebook 1).
+data_loaded/LODES/
+
+# County shapefiles, re-downloadable from the Census TIGER/cartographic archive.
+data_loaded/county/
+
+# Aggregated job postings by county-month.
+data_loaded/jobpostings_aggregated/
+
+# FEMA National Risk Index shapefile. nri_counties.parquet is the slim
+# derivative actually used by most notebooks and is kept.
 data_loaded/NRI_Shapefile_Counties/
+
+# Raw ACS / SAIPE / BEA / County Health Rankings archives. The *_combined.parquet
+# files built from them are kept, so the modelling notebooks run without these.
 data_loaded/data_final/health_2000_2019.zip
 data_loaded/data_final/population_estimates/
 data_loaded/data_final/health_2020_2025/
 data_loaded/data_final/bea_economic_data/
 data_loaded/data_final/ACSST1Y2010.S1501.zip
-data_loaded/data_final/saipe_medianincome.zip
 data_loaded/data_final/ACSST1Y2010.S1401.zip
 data_loaded/data_final/ACSDT5Y2016.B19080_2025-12-05T143905.zip
+data_loaded/data_final/saipe_medianincome.zip
+
+# Audit report (local working notes, not part of the release)
+AUDIT_FINDINGS.md
